@@ -5,6 +5,7 @@ import os
 from time import time as realtime
 from time import asctime, localtime
 import numpy as np
+import pickle as pickle
 import molmodmt as m3t
 import simtk.openmm as mm
 import simtk.openmm.app as app
@@ -61,13 +62,13 @@ positions = m3t.get(pdb, coordinates=True)
 velocities = None # Set according to Maxwell Boltzmann distribution
 box_vectors = None # box_vectors in topology coming from pdb
 simulation.context.setPositions(positions)
-simulation.context.setVelocitiesToTemperature(0.0*unit.kelvin)
+simulation.context.setVelocitiesToTemperature(temperature)
 #simulation.context.setPeriodicBoxVectors(box_vectors) ## r_boxes[0] * nanometer,r_boxes[1] * nanometer, r_boxes[2] * nanometer
 
 #### Iterations Parameters
 
 time_simulation = 100.0 * unit.picoseconds
-time_saving = 10.0 * unit.picoseconds
+time_saving = 1.0 * unit.picoseconds
 time_verbose = 10.0 * unit.picoseconds
 time_checkpoint = 10.0 * unit.picoseconds
 
@@ -95,7 +96,7 @@ data['kinetic_temperature'] = unit.Quantity(np.zeros([number_states_saved], np.f
 
 def printout_status(iteration, number_iterations, time, kinetic_temperature, volume):
 
-    progression = 100.0*(interation/number_iterations)
+    progression = 100.0*(interaction/number_iterations)
     print("Progress: {:6.2f}, Iteration: {:d}, Time: {:.2f} ps, Kinetic Temperature: {:.3f} K,\
           Volume: {:.3f} nm^3".format(progression, iteration,
                                       time.value_in_units(unit.picoseconds),
@@ -137,6 +138,8 @@ data['volume'][0] = volume
 data['density'][0] = density
 data['kinetic_temperature'][0] = kinetic_temperature
 
+printout_status(0, number_iterations, time, kinetic_temperature, volume)
+
 #### Running Simulation
 
 start_simulation_realtime = realtime()
@@ -158,10 +161,15 @@ for iteration in range(1, number_iterations+1):
     data['kinetic_temperature'] = kinetic_temperature
     if (iteration%elapsed_iterations_verbose)==0:
         printout_status(iteration, number_iterations, time, kinetic_temperature, volume)
-    if (iteration%elapsed_iterations_checkpoing)==0:
+    if (iteration%elapsed_iterations_checkpoint)==0:
         save_checkpoint_state(simulation)
 
 end_simulation_realtime = realtime()
+
+#### Savind Data
+
+with open(os.path.join('data.pkl'), 'wb') as f:
+    pickle.dump(data, f)
 
 #### Saving Finnal State
 
