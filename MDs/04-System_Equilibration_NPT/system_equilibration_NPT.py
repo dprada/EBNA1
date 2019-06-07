@@ -178,7 +178,6 @@ with open(os.path.join('data.pkl'), 'wb') as f:
 #### Saving Finnal State
 
 save_finnal_state(simulation)
-m3t.convert(simulation,'system_equilibrated_nvt.pdb')
 
 #### Summary
 
