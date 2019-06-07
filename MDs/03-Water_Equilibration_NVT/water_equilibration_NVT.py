@@ -3,7 +3,8 @@ warnings.filterwarnings("ignore")
 
 import os
 from time import time as realtime
-from time import asctime, localtime
+from time import asctime, localtime, strftime, gmtime
+from pytools_uibcdf.Time import formatting_elapsed_time
 import numpy as np
 import pickle as pickle
 import molmodmt as m3t
@@ -12,10 +13,10 @@ import simtk.openmm.app as app
 import simtk.unit as unit
 from openmmtools.integrators import LangevinIntegrator
 
-
 start_realtime = realtime()
 print("")
 print("Start:",asctime(localtime()))
+print("")
 
 #### Loading PDB
 
@@ -59,11 +60,8 @@ simulation = app.Simulation(topology, system, integrator, platform, properties)
 #### Initial Conditions
 
 positions = m3t.get(pdb, coordinates=True)
-velocities = None # Set according to Maxwell Boltzmann distribution
-box_vectors = None # box_vectors in topology coming from pdb
 simulation.context.setPositions(positions)
 simulation.context.setVelocitiesToTemperature(temperature)
-#simulation.context.setPeriodicBoxVectors(box_vectors) ## r_boxes[0] * nanometer,r_boxes[1] * nanometer, r_boxes[2] * nanometer
 
 #### Iterations Parameters
 
@@ -96,12 +94,10 @@ data['kinetic_temperature'] = unit.Quantity(np.zeros([number_states_saved], np.f
 
 def printout_status(iteration, number_iterations, time, kinetic_temperature, volume):
 
-    progression = 100.0*(interaction/number_iterations)
-    print("Progress: {:6.2f}, Iteration: {:d}, Time: {:.2f} ps, Kinetic Temperature: {:.3f} K,\
-          Volume: {:.3f} nm^3".format(progression, iteration,
-                                      time.value_in_units(unit.picoseconds),
-                                     kinetic_temperature.value_in_units(unit.kelvin),
-                                     volume.value_in_units(unit.nanometers**3)))
+    progression = 100.0*(iteration/number_iterations)
+    msg="Progress: {:6.2f}%, Time: {:.2f} ps, Kinetic Temperature: {:.3f} K, Volume: {:.3f} nm^3"
+    print(msg.format(progression, time.value_in_unit(unit.picoseconds),
+                     kinetic_temperature.value_in_unit(unit.kelvin), volume.value_in_unit(unit.nanometers**3)))
 
 #### CheckPoint and Finnal State
 
@@ -185,12 +181,15 @@ total_elapsed_realtime = (end_realtime - start_realtime)*unit.seconds
 
 performance = (time_simulation/unit.nanoseconds) / (simulation_elapsed_realtime/unit.hours)
 
+print("")
 print("End:",asctime(localtime()))
 print("")
 print("************************")
 print("")
-print("Total time: {}".format(total_elapsed_realtime))
-print("Preparation time: {}".format(preparation_elapsed_realtime))
-print("Simulation time: {}".format(simulation_elapsed_realtime))
-print("Performance: {} ns/h", simulation_elapsed_realtime)
+print("Total time: "+formatting_elapsed_time(total_elapsed_realtime/unit.seconds))
+print("Preparation time: "+formatting_elapsed_time(preparation_elapsed_realtime/unit.seconds))
+print("Simulation time: "+formatting_elapsed_time(simulation_elapsed_realtime/unit.seconds))
+print("")
+print("Simulation Performance: {:.3f} ns/h".format(performance))
+print("")
 
