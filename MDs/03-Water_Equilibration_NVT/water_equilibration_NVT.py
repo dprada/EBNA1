@@ -2,6 +2,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 import os
+import sys
 from time import time as realtime
 from time import asctime, localtime, strftime, gmtime
 from pytools_uibcdf.Time import formatting_elapsed_time
@@ -12,6 +13,7 @@ import simtk.openmm as mm
 import simtk.openmm.app as app
 import simtk.unit as unit
 from openmmtools.integrators import LangevinIntegrator
+from molmodmt.utils.openmm.forces import HarmonicRestraintPositions
 
 start_realtime = realtime()
 print("")
@@ -34,6 +36,12 @@ system = forcefield.createSystem(topology,
                                  ewaldErrorTolerance=0.0005)
 
 #### Custom Forces
+
+#atoms_restrained = m3t.select(topology, 'type C N O P S and not water')
+#harmonic_constant = 1.0*unit.kilocalories_per_mole/unit.angstrom**2
+#pinned_positions = m3t.get(pdb, selection=atoms_restrained, coordinates=True)
+#force = HarmonicRestraintPositions(atoms_restrained, harmonic_constant, pinned_positions)
+#system.addForce(force)
 
 #### Thermodynamic State
 
