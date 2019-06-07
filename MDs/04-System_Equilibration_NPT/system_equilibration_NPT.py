@@ -22,7 +22,7 @@ print("")
 
 #### Loading PDB
 
-pdb = m3t.convert('system_minimized.pdb', 'openmm.PDBFile')
+pdb = m3t.convert('system_equilibrated_NVT.pdb', 'openmm.PDBFile')
 
 #### System
 
@@ -47,7 +47,7 @@ system = forcefield.createSystem(topology,
 
 kB = unit.BOLTZMANN_CONSTANT_kB * unit.AVOGADRO_CONSTANT_NA
 temperature = 300.0*unit.kelvin
-pressure    = None
+pressure    = 1.0*unit.atmosphere
 
 #### Integrator
 
@@ -55,6 +55,12 @@ friction   = 1.0/unit.picosecond
 step_size  = 2.0*unit.femtoseconds
 integrator = LangevinIntegrator(temperature, friction, step_size)
 integrator.setConstraintTolerance(0.00001)
+
+#### Barostat
+
+barostat_interval = 25
+barostat = mm.MonteCarloBarostat(pressure, temperature, barostat_interval)
+system.addForce(barostat)
 
 #### Platform
 
@@ -73,10 +79,10 @@ simulation.context.setVelocitiesToTemperature(temperature)
 
 #### Iterations Parameters
 
-time_simulation = 100.0 * unit.picoseconds
+time_simulation = 1.0 * unit.nanoseconds
 time_saving = 1.0 * unit.picoseconds
-time_verbose = 10.0 * unit.picoseconds
-time_checkpoint = 10.0 * unit.picoseconds
+time_verbose = 100.0 * unit.picoseconds
+time_checkpoint = 100.0 * unit.picoseconds
 
 number_iterations = int(time_simulation/time_saving)
 elapsed_iterations_verbose = int(time_verbose/time_saving)
@@ -178,6 +184,7 @@ with open(os.path.join('data.pkl'), 'wb') as f:
 #### Saving Finnal State
 
 save_finnal_state(simulation)
+m3t.convert(simulation,'system_equilibrated_NPT.pdb')
 
 #### Summary
 
@@ -187,7 +194,7 @@ preparation_elapsed_realtime = (start_simulation_realtime - start_realtime)*unit
 simulation_elapsed_realtime = (end_simulation_realtime - start_simulation_realtime)*unit.seconds
 total_elapsed_realtime = (end_realtime - start_realtime)*unit.seconds
 
-performance = (time_simulation/unit.nanoseconds) / (simulation_elapsed_realtime/unit.hours)
+performance = 24 * (time_simulation/unit.nanoseconds) / (simulation_elapsed_realtime/unit.hours)
 
 print("")
 print("End:",asctime(localtime()))
@@ -198,6 +205,6 @@ print("Total time: "+formatting_elapsed_time(total_elapsed_realtime/unit.seconds
 print("Preparation time: "+formatting_elapsed_time(preparation_elapsed_realtime/unit.seconds))
 print("Simulation time: "+formatting_elapsed_time(simulation_elapsed_realtime/unit.seconds))
 print("")
-print("Simulation Performance: {:.3f} ns/h".format(performance))
+print("Simulation Performance: {:.3f} ns/day".format(performance))
 print("")
 
