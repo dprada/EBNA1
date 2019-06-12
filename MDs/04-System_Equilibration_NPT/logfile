@@ -1,0 +1,25 @@
+
+Start: Wed Jun 12 14:02:24 2019
+
+Progress:   0.00%, Time: 0.00 ps, Kinetic Temperature: 298.865 K, Volume: 467.422 nm^3
+Progress:  10.00%, Time: 100.00 ps, Kinetic Temperature: 295.595 K, Volume: 407.149 nm^3
+Progress:  20.00%, Time: 200.00 ps, Kinetic Temperature: 297.433 K, Volume: 406.776 nm^3
+Progress:  30.00%, Time: 300.00 ps, Kinetic Temperature: 298.809 K, Volume: 407.694 nm^3
+Progress:  40.00%, Time: 400.00 ps, Kinetic Temperature: 297.463 K, Volume: 407.360 nm^3
+Progress:  50.00%, Time: 500.00 ps, Kinetic Temperature: 295.748 K, Volume: 407.181 nm^3
+Progress:  60.00%, Time: 600.00 ps, Kinetic Temperature: 297.036 K, Volume: 406.374 nm^3
+Progress:  70.00%, Time: 700.00 ps, Kinetic Temperature: 296.652 K, Volume: 407.572 nm^3
+Progress:  80.00%, Time: 800.00 ps, Kinetic Temperature: 294.589 K, Volume: 405.927 nm^3
+Progress:  90.00%, Time: 900.00 ps, Kinetic Temperature: 296.953 K, Volume: 405.567 nm^3
+Progress: 100.00%, Time: 1000.00 ps, Kinetic Temperature: 294.923 K, Volume: 406.024 nm^3
+
+End: Wed Jun 12 15:41:03 2019
+
+************************
+
+Total time: 00d:01h:38m:38.9s
+Preparation time: 00d:00h:00m:04.7s
+Simulation time: 00d:01h:38m:33.2s
+
+Simulation Performance: 14.611 ns/day
+
