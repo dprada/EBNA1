@@ -1,29 +1,30 @@
 import warnings
 warnings.filterwarnings("ignore")
 
-import os
-import sys
+from sys import stdout as _stdout
+from sys import exit
 from time import time as realtime
-from time import asctime, localtime, strftime, gmtime
-from pytools_uibcdf.Time import formatting_elapsed_time
-import numpy as np
-import pickle as pickle
+from pytools_uibcdf.Time import formatted_elapsed_time, formatted_local_time
 import molmodmt as m3t
 import simtk.openmm as mm
 import simtk.openmm.app as app
 import simtk.unit as unit
 from mdtraj.reporters import HDF5Reporter
 from openmmtools.integrators import LangevinIntegrator
-from molmodmt.utils.openmm.forces import HarmonicRestraintPositions
+
+#### Log file
+
+logfile = open('logfile.txt','w')
+#logfile = _stdout
 
 start_realtime = realtime()
-print("")
-print("Start:",asctime(localtime()))
-print("")
+logfile.write("\n")
+logfile.write("Start: "+formatted_local_time()+"\n")
+logfile.write("\n")
 
 #### Loading PDB
 
-pdb = m3t.convert('system_equilibrated_NPT.pdb', 'openmm.PDBFile')
+pdb = m3t.convert('system_equilibrated_NVT.pdb', 'openmm.PDBFile')
 
 #### System
 
@@ -72,123 +73,82 @@ simulation.context.setVelocitiesToTemperature(temperature)
 
 #### Iterations Parameters
 
-time_simulation = 200.0 * unit.nanoseconds
-time_saving = 1.0 * unit.picoseconds
-time_verbose = 100.0 * unit.picoseconds
-time_checkpoint = 100.0 * unit.picoseconds
+steps_simulation = 10000
+steps_interval_saving = 500
+steps_interval_verbose = 2500
+steps_interval_checkpoint = 2500
 
-steps_interval_saving = int(time_saving/step_size)
-steps_interval_verbose = int(time_verbose/step_size)
-steps_interval_checkpoint = int(time_checkpoint/step_size)
-total_simulation_steps = int(time_simulation/step_size)
+time_simulation = (steps_simulation*step_size).in_units_of(unit.picoseconds)
+time_saving = (steps_interval_saving*step_size).in_units_of(unit.picoseconds)
+time_verbose = (steps_interval_verbose*step_size).in_units_of(unit.picoseconds)
+time_checkpoint = (steps_interval_checkpoint*step_size).in_units_of(unit.picoseconds)
+
+logfile.write("\n")
+logfile.write("Step size: {}\n".format(step_size))
+logfile.write("Simulation time: {} ({} steps)\n".format(time_simulation , steps_simulation))
+logfile.write("Saving time: {} ({} steps)\n".format(time_saving , steps_interval_saving))
+logfile.write("Verbose time: {} ({} steps)\n".format(time_verbose , steps_interval_verbose))
+logfile.write("Checkpoint time: {} ({} steps)\n".format(time_checkpoint , steps_interval_checkpoint))
+logfile.write("\n")
+
 
 #### Reporters
 
-# Observables Stored
+# Logfile
 
-simulation.reporters.append(app.StateDataReporter(stdout, steps_interval_verbose,
-                                                  progress=True, step=True, time=True,
+simulation.reporters.append(app.StateDataReporter(logfile, reportInterval=steps_interval_verbose,
+                                                  progress=True, speed=True, step=True, time=True,
                                                   potentialEnergy=True, temperature=True,
-                                                  volume=True))
+                                                  volume=True, totalSteps=steps_simulation,
+                                                  separator=", "))
 
-simulation.reporters.append(HDF5Reporter('production_1st.h5', steps_interval_saving,
+# Observables
+
+simulation.reporters.append(HDF5Reporter('traj_1st_stage.h5', reportInterval=steps_interval_saving,
                                          coordinates=True, time=True, cell=True,
                                          potentialEnergy=True, kineticEnergy=True,
-                                         temperature=True, volume=True))
+                                         temperature=True))
 
+# Checkpoints
 
-#### CheckPoint and Finnal State
-
-def dump_state(simulation, filename):
-
-    state = simulation.context.getState(getPositions=True, getVelocities=True)
-    time = state.getTime() / unit.picoseconds
-    positions = state.getPositions() / unit.nanometers
-    velocities = state.getVelocities() / unit.nanometers*unit.picoseconds
-    box_vectors = state.getPeriodicBoxVectors() / unit.nanometers
-
-    with open(os.path.join(filename), 'wb') as f:
-        pickle.dump((time, positions, velocities, box_vectors), f)
-
-def save_checkpoint_state(simulation):
-    return dump_state(simulation, "checkpoint.pkl")
-
-def save_finnal_state(simulation):
-    return dump_state(simulation, "restart.pkl")
-
-#### Reporting Initial State
-
-state = simulation.context.getState(getEnergy=True)
-time = state.getTime()
-potential_energy = state.getPotentialEnergy()
-kinetic_energy = state.getKineticEnergy()
-volume = state.getPeriodicBoxVolume()
-density = (net_mass / volume).in_units_of(unit.gram / unit.centimeter**3)
-kinetic_temperature = (2.0 * kinetic_energy / kB / n_degrees_of_freedom).in_units_of(unit.kelvin)
-data['time'][0] = time
-data['potential'][0] = potential_energy
-data['kinetic'][0] = kinetic_energy
-data['volume'][0] = volume
-data['density'][0] = density
-data['kinetic_temperature'][0] = kinetic_temperature
-
-printout_status(0, number_iterations, time, kinetic_temperature, volume)
+simulation.reporters.append(app.CheckpointReporter('checkpnt.chk', steps_interval_checkpoint))
 
 #### Running Simulation
 
 start_simulation_realtime = realtime()
 
-for iteration in range(1, number_iterations+1):
-    integrator.step(steps_per_iteration)
-    state = simulation.context.getState(getEnergy=True)
-    time = state.getTime()
-    potential_energy = state.getPotentialEnergy()
-    kinetic_energy = state.getKineticEnergy()
-    volume = state.getPeriodicBoxVolume()
-    density = (net_mass / volume).in_units_of(unit.gram / unit.centimeter**3)
-    kinetic_temperature = (2.0 * kinetic_energy / kB / n_degrees_of_freedom).in_units_of(unit.kelvin)
-    data['time'][iteration]=time
-    data['potential'] = potential_energy
-    data['kinetic'] = kinetic_energy
-    data['volume'] = volume
-    data['density'] = density
-    data['kinetic_temperature'] = kinetic_temperature
-    if (iteration%elapsed_iterations_verbose)==0:
-        printout_status(iteration, number_iterations, time, kinetic_temperature, volume)
-    if (iteration%elapsed_iterations_checkpoint)==0:
-        save_checkpoint_state(simulation)
+simulation.step(steps_simulation)
 
 end_simulation_realtime = realtime()
 
-#### Savind Data
-
-with open(os.path.join('data.pkl'), 'wb') as f:
-    pickle.dump(data, f)
-
 #### Saving Finnal State
 
-save_finnal_state(simulation)
-m3t.convert(simulation,'system_equilibrated_NPT.pdb')
+simulation.saveState('finnal_state.xml')
+simulation.saveCheckpoint('finnal_state.chk')
+m3t.convert(simulation,'finnal_positions.pdb')
 
 #### Summary
-
 
 end_realtime = realtime()
 preparation_elapsed_realtime = (start_simulation_realtime - start_realtime)*unit.seconds
 simulation_elapsed_realtime = (end_simulation_realtime - start_simulation_realtime)*unit.seconds
 total_elapsed_realtime = (end_realtime - start_realtime)*unit.seconds
 
-performance = 24 * (time_simulation/unit.nanoseconds) / (simulation_elapsed_realtime/unit.hours)
+performance = 24 * (steps_simulation*step_size/unit.nanoseconds) / (simulation_elapsed_realtime/unit.hours)
 
-print("")
-print("End:",asctime(localtime()))
-print("")
-print("************************")
-print("")
-print("Total time: "+formatting_elapsed_time(total_elapsed_realtime/unit.seconds))
-print("Preparation time: "+formatting_elapsed_time(preparation_elapsed_realtime/unit.seconds))
-print("Simulation time: "+formatting_elapsed_time(simulation_elapsed_realtime/unit.seconds))
-print("")
-print("Simulation Performance: {:.3f} ns/day".format(performance))
-print("")
+logfile.write("\n")
+logfile.write("End: "+formatted_local_time()+"\n")
+logfile.write("\n")
+logfile.write("****SUMMARY****\n")
+logfile.write("\n")
+logfile.write("Total time: "+formatted_elapsed_time(total_elapsed_realtime/unit.seconds)+"\n")
+logfile.write("Preparation time: "+formatted_elapsed_time(preparation_elapsed_realtime/unit.seconds)+"\n")
+logfile.write("Simulation time: "+formatted_elapsed_time(simulation_elapsed_realtime/unit.seconds)+"\n")
+logfile.write("\n")
+logfile.write("Simulation Performance: {:.3f} ns/day".format(performance)+"\n")
+logfile.write("\n")
+
+#### Closing reporters
+logfile.close()
+simulation.reporters[1].close()
 
