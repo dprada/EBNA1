@@ -1,8 +1,8 @@
 import warnings
 warnings.filterwarnings("ignore")
 
-from sys import stdout as _stdout
-from sys import exit
+import os
+import sys
 from time import time as realtime
 from pytools_uibcdf.Time import formatted_elapsed_time, formatted_local_time
 import molmodmt as m3t
@@ -15,7 +15,7 @@ from openmmtools.integrators import LangevinIntegrator
 #### Log file
 
 logfile = open('logfile.txt','w')
-#logfile = _stdout
+#logfile = sys.stdout
 
 start_realtime = realtime()
 logfile.write("\n")
@@ -104,7 +104,7 @@ simulation.reporters.append(app.StateDataReporter(logfile, reportInterval=steps_
 
 # Observables
 
-simulation.reporters.append(HDF5Reporter('traj_1st_stage.h5', reportInterval=steps_interval_saving,
+simulation.reporters.append(HDF5Reporter('trajectory.h5', reportInterval=steps_interval_saving,
                                          coordinates=True, time=True, cell=True,
                                          potentialEnergy=True, kineticEnergy=True,
                                          temperature=True))
@@ -126,6 +126,9 @@ end_simulation_realtime = realtime()
 simulation.saveState('finnal_state.xml')
 simulation.saveCheckpoint('finnal_state.chk')
 m3t.convert(simulation,'finnal_positions.pdb')
+
+#### Removing checkpoints
+os.remove('checkpnt.chk')
 
 #### Summary
 
