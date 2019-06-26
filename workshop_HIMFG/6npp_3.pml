@@ -1,8 +1,5 @@
 # Loading pdbs
 
-#load 1VHI.pdb
-#remove solvent and 1VHI
-
 load 1B3T.pdb
 remove solvent and 1B3T
 
@@ -10,7 +7,6 @@ load 6npp.pdb, 6NPP
 remove solvent and 6NPP
 
 # Alignment
-# align 1VIH, 1B3T
 align 1B3T, 6NPP
 
 # Selections
@@ -33,41 +29,41 @@ hide everything
 bg_color white
 
 set_view (\
-     0.019482266,    0.996740818,   -0.078172363,\
-     0.726869345,    0.039567064,    0.685619771,\
-     0.686485469,   -0.070178606,   -0.723737776,\
-     0.000202328,    0.000169608, -176.117889404,\
-   -11.571586609,   -9.674448013,   -6.626377106,\
-  -166.005874634,  518.257263184,   20.000000000 )
+     0.125951633,    0.982413232,   -0.137722805,\
+     0.946368158,   -0.160621241,   -0.280289769,\
+    -0.297487885,   -0.095035166,   -0.949971437,\
+     0.000504859,    0.000122059, -165.274459839,\
+   -11.373695374,  -24.453845978,   -2.146590710,\
+   136.197769165,  194.336532593,   20.000000000 )
 
 show cartoon, protein_6NPP
 set cartoon_color, c_binding_domain, protein_6NPP
 show surface, protein_6NPP
-set surface_color, white, protein_6NPP
-set transparency, 0.8
+set surface_color, red, protein_6NPP
+set transparency, 0.4
+set surface_cavity_mode, 1
 
 show cartoon, dna_1B3T
 color c_dna, dna_1B3T
-set cartoon_transparency, 0.5, dna_1B3T
 
 rebuild
 
 ## Quita la neblina
-set depth_cue, 0
+#set depth_cue, 0
 
 ### Quito o pongo perspectiva
 set orthoscopic, on
 
-## Elijo últimas opciones de edición para renderizar
+### Elijo últimas opciones edición para renderizar
 set antialias, 2
 set opaque_background, off
 set ray_trace_gain, 0.1
 set ray_trace_mode, 0
 set ray_shadows, 1
 
-# Renderizamos y guardamos
+## Renderizamos y guardamos
 ray 1500,1200
-png docking_0.png, dpi=300
+png docking_3.png, dpi=300
 
 ## Para ejecutar el script desde la terminal:
 ## >>> pymol -qc monomero.pml

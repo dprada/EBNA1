@@ -1,8 +1,5 @@
 # Loading pdbs
 
-#load 1VHI.pdb
-#remove solvent and 1VHI
-
 load 1B3T.pdb
 remove solvent and 1B3T
 
@@ -10,7 +7,6 @@ load 6npp.pdb, 6NPP
 remove solvent and 6NPP
 
 # Alignment
-# align 1VIH, 1B3T
 align 1B3T, 6NPP
 
 # Selections
@@ -40,11 +36,11 @@ set_view (\
    -11.571586609,   -9.674448013,   -6.626377106,\
   -166.005874634,  518.257263184,   20.000000000 )
 
-show cartoon, protein_6NPP
-set cartoon_color, c_binding_domain, protein_6NPP
+#show cartoon, protein_6NPP
+#set cartoon_color, c_binding_domain, protein_6NPP
 show surface, protein_6NPP
-set surface_color, white, protein_6NPP
-set transparency, 0.8
+set surface_color, c_binding_domain, protein_6NPP
+#set transparency, 0.8
 
 show cartoon, dna_1B3T
 color c_dna, dna_1B3T
@@ -58,7 +54,7 @@ set depth_cue, 0
 ### Quito o pongo perspectiva
 set orthoscopic, on
 
-## Elijo últimas opciones de edición para renderizar
+## Elijo últimas opciones edición para renderizar
 set antialias, 2
 set opaque_background, off
 set ray_trace_gain, 0.1
@@ -67,7 +63,7 @@ set ray_shadows, 1
 
 # Renderizamos y guardamos
 ray 1500,1200
-png docking_0.png, dpi=300
+png docking_1.png, dpi=300
 
 ## Para ejecutar el script desde la terminal:
 ## >>> pymol -qc monomero.pml
